@@ -4,7 +4,7 @@ inflearn의 `따라하며 배우는 노드, 리액트 시리즈 - 기본 강의`
 호오오오옥시나 배우면서 작성한 코드가 나중에 다른 프로젝트에서 사용될 것을 우려하여 backend 폴더를 만들고 그 안에서 작업을 하였습니다.
 강의를 듣다가 발생한 오류나 문제는 **여기서 잠깐!**을 통해 해결하였습니다.
 
-## 패키지 초기 생성
+## ⚙️ 패키지 초기 생성
 
 ### 1. 터미널에 명령어를 입력해 패키지매니저를 초기화한다.
 
@@ -58,7 +58,7 @@ Error: listen EADDRINUSE: address already in use :::5000
 
 이는 airplay가 5000번 포트를 이미 점유하고 있기 때문에 발생하는 오류이니, airplay를 끄거나 포트 번호를 바꾸도록 하자.
 
-## MongoDB 연결하기
+## ⚙️ MongoDB 연결하기
 
 ### 1. MongoDB에 가입하고 MongoDB에서 제공하는 클러스터 생성 프로세스를 따라간다.
 
@@ -148,7 +148,7 @@ mongoose
 node_modules
 ```
 
-## Mongoose로 Schema 만들기
+## ⚙️ Mongoose로 Schema 만들기
 
 Mongoose를 활용하여 Spring의 JPA, Django의 Models처럼 schema를 만들 수 있다.
 
