@@ -182,16 +182,10 @@ const userSchema = mongoose.Schema({
 });
 ```
 
-### 4. Model을 정의하고 여러 곳에서도 사용할 수 있도록 export 한다.
+### 4. Schema를 Model로 감싼 뒤 여러 곳에서도 사용할 수 있도록 export 한다.
 
 ```js
 const userSchema = mongoose.Schema({
-  name:{
-    ...
-  },
-  email:{
-    ...
-  },
   ...
 })
 
