@@ -2,6 +2,12 @@ const express = require("express");
 const app = express();
 const port = 5000;
 
+const bodyParser = require("body-parser");
+// form data
+app.use(bodyParser.urlencoded({ extended: true }));
+// json data
+app.use(bodyParser.json());
+
 // 환경 변수 접근을 허용해주는 라이브러리
 const dotenv = require("dotenv");
 dotenv.config();
@@ -11,17 +17,32 @@ const { DB_ID, DB_PASSWORD } = process.env;
 const mongoose = require("mongoose");
 mongoose
   .connect(
-    `mongodb+srv://${DB_ID}:${DB_PASSWORD}@strawberry.ubsluwz.mongodb.net/?retryWrites=true&w=majority`,
-    {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    }
+    `mongodb+srv://${DB_ID}:${DB_PASSWORD}@strawberry.ubsluwz.mongodb.net/?retryWrites=true&w=majority`
   )
   .then(() => console.log("MongoDB Connected!"))
   .catch((err) => console.log(err));
 
+const { User } = require("./models/User");
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
+});
+
+app.post("/register", async (req, res) => {
+  // sign up 시 받아 온 정보를
+  // DB에 추가
+  const user = new User(req.body);
+
+  await user
+    .save()
+    .then(() => {
+      res.status(200).json({
+        success: true,
+      });
+    })
+    .catch((err) => {
+      res.json({ success: false, err });
+    });
 });
 
 app.listen(port, () => {

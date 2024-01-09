@@ -82,12 +82,7 @@ $ npm install mongoose --save
 // index.js
 ...
 const mongoose = require("mongoose");
-mongoose.connect(`mongodb+srv://<MongoDB 클러스터 ID>:<MongoDB 클러스터 Password>@strawberry.ubsluwz.mongodb.net/?retryWrites=true&w=majority`,
-    {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    }
-  )
+mongoose.connect(`mongodb+srv://<MongoDB 클러스터 ID>:<MongoDB 클러스터 Password>@strawberry.ubsluwz.mongodb.net/?retryWrites=true&w=majority`)
   // 성공 하면 기뻐해라
   .then(() => console.log("MongoDB Connected!"))
   // 못 했으면 에러를 뱉어라
@@ -193,3 +188,60 @@ const User = mongoose.model("User", userSchema);
 
 module.exports = { User };
 ```
+
+## ⚙️ POST 메소드를 활용하여 회원가입 API 만들기
+
+### 1. body parser를 설치한다.
+
+body parser는 client side에서 보내주는 data를 parsing 해주는 역할을 하는 라이브러리이다.
+
+```
+$ npm i body-parser --save
+```
+
+### 2. index.js에 선언한다.
+
+```JS
+// index.js
+const bodyParser = require("body-parser");
+// form data
+app.use(bodyParser.urlencoded({ extended: true }));
+// json
+app.use(bodyParser.json());
+```
+
+### 3. 만들어둔 User model 불러오기
+
+```js
+const { User } = require("./models/User");
+```
+
+### 4. API POST 로직 작성하기
+
+**여기서 잠깐!**<br>
+mongoose의 최신버전에서는 콜백함수를 더 이상 지원하지 않기 때문에 강의대로 진행하면 서버가 다운되고 에러문에 뒤덮이게 될 것입니다.
+
+```js
+app.post("/register", async (req, res) => {
+  // sign up 시 받아 온 정보를
+  // DB에 추가
+  const user = new User(req.body);
+
+  await user
+    .save()
+    .then(() => {
+      res.status(200).json({
+        success: true,
+      });
+    })
+    .catch((err) => {
+      res.json({ success: false, err });
+    });
+});
+```
+
+**여기서 잠깐!** <br>
+아까는 되던데 왜 false가 뜨고 에러문에서 이메일을 보여주지?
+
+- email이 unique 속성이기 때문에 컬렉션에 이미 등록되어 있는 이메일로 재시도할 경우 에러(code: 11000)를 반환하게 됩니다.
+- Browse Collections 버튼을 눌러 확인하세요!
