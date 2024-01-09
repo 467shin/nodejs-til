@@ -6,10 +6,10 @@ inflearn의 `따라하며 배우는 노드, 리액트 시리즈 - 기본 강의`
 
 ## ⚙️ 목차
 
-1. [패키지 초기 생성](#⚙️-패키지-초기-생성)
-2. [MongoDB 연결하기](#⚙️-mongodb-연결하기)
-3. [Mongoose로 Schema 만들기](#⚙️-mongoose로-schema-만들기)
-4. [POST 메소드를 활용하여 회원가입 API 만들기](#⚙️-post-메소드를-활용하여-회원가입-api-만들기)
+1. [패키지 초기 생성](#-패키지-초기-생성)
+2. [MongoDB 연결하기](#-mongodb-연결하기)
+3. [Mongoose로 Schema 만들기](#-mongoose로-schema-만들기)
+4. [POST 메소드를 활용하여 회원가입 API 만들기](#-post-메소드를-활용하여-회원가입-api-만들기)
 
 ## ⚙️ 패키지 초기 생성
 
