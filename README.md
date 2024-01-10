@@ -370,10 +370,10 @@ if (user.isModified("password")) {
 // index.js
 app.post("/login", async (req, res) => {
   // 받은 이메일을 DB에서 찾는다.
-  // 해당 email로 된 유저가 없을 경우
-  // 있을 경우
-  // 비밀번호가 맞을 경우
-  // 맞다면 토큰 생성
+  // 해당 email로 된 유저가 있을 경우
+  // 없을 경우
+  // 비밀번호 체크
+  // 유효하면 토큰 생성
 });
 ```
 
