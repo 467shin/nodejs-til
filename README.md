@@ -252,3 +252,107 @@ app.post("/register", async (req, res) => {
 
 - email이 unique 속성이기 때문에 컬렉션에 이미 등록되어 있는 이메일로 재시도할 경우 에러(code: 11000)를 반환하게 됩니다.
 - Browse Collections 버튼을 눌러 확인하세요!
+
+## ⚙️ Nodemon 설치하기
+
+지금까지 강의를 들으며, 코드의 변경사항을 반영하기 위해서는 server를 재기동해야 한다는 사실을 알았을 것이다.<br>
+Nodemon은 코드의 저장과 동시에 변경사항을 반영시켜주는 패키지이다.<br>
+개발 단계에서만 활용되는 라이브러리이기 때문에 -dev를 붙여 설치해준다
+
+```
+$ npm i nodemon --save-dev
+```
+
+nodemon을 활용하여 서버를 기동하기 위해 package.json에 스크립트 명령어를 추가해준다.
+
+```
+// package.json
+"scripts": {
+    ...
+    "backend": "nodemon index.js",
+    ...
+  },
+```
+
+```
+$ npm run backend
+```
+
+## ⚙️ 비밀번호 암호화하기
+
+비밀번호는 민감한 정보이기 때문에 db에 그대로 저장을 하게 되면 안 된다.<br>
+그러므로 해싱을 통해 비밀번호를 암호화한 뒤 저장하는 것을 추천한다.
+
+### 1. bcrypt 설치하기
+
+```
+$ npm i bcrypt --save
+```
+
+### 2. bcrypt 적용하기
+
+또한 암호화는 data를 db에 저장하기 직전에 이루어져야 한다.<br>
+그러므로 models의 User.js에 bcrypt를 적용해야 한다.
+
+```js
+const bcrypt = require("bcrypt");
+// 소금 10번 치기
+const saltRounds = 10;
+```
+
+**여기서 잠깐!**<br>
+비밀번호를 암호화하는 과정에서 비밀번호 뒤에 일련의 문자열을 붙인 다음 해싱을 하게 되면 Rainbow Table을 활용한 브루트포스 공격의 난이도가 더욱 높아지는데,
+이 때 뒤에 붙는 일련의 문자열을 `소금`이라 한다.
+
+### 3. 암호화 로직 작성하기
+
+```js
+// User.js
+
+// save 전에 실행
+userSchema.pre("save", function (next) {
+  let user = this;
+
+  // 암호화 로직
+  if (user.isModified("password")) {
+    bcrypt.genSalt(saltRounds, (err, salt) => {
+      if (err) return next(err);
+
+      bcrypt.hash(user.password, salt, (err, hash) => {
+        if (err) return next(err);
+
+        user.password = hash;
+        next();
+      });
+    });
+  }
+});
+
+const User = mongoose.model("User", userSchema);
+```
+
+**여기서 잠깐!**<br>
+맨 윗줄의 함수만 화살표 함수가 아닌 이유는 `this` 키워드 때문이다.<br>
+일반 함수일 경우, user 변수의 this가 `userSchema`를 가리키지만, 화살표 함수의 경우 한 단계 밖인 전역을 가리키기 때문에...
+
+```js
+// 암호화 로직
+if (user.isModified("password")) {
+  bcrypt
+    .genSalt(saltRounds)
+    .then((salt) => bcrypt.hash(user.password, salt))
+    .then((hash) => {
+      user.password = hash;
+      next();
+    })
+    .finally((err) => next(err));
+}
+```
+
+콜백 지옥이 싫어서 promise 문법으로 바꾸어 보았다.
+
+### 4. Postman으로 확인하기
+
+그리고 잘 돼서 기뻐하기
+
+## ⚙️ 로그인 로직 작성하기
