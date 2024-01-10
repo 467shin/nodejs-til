@@ -12,13 +12,11 @@ app.use(bodyParser.json());
 const dotenv = require("dotenv");
 dotenv.config();
 
-const { DB_ID, DB_PASSWORD } = process.env;
+const { DB_ID, DB_PASSWORD, DB_URI } = process.env;
 
 const mongoose = require("mongoose");
 mongoose
-  .connect(
-    `mongodb+srv://${DB_ID}:${DB_PASSWORD}@strawberry.ubsluwz.mongodb.net/?retryWrites=true&w=majority`
-  )
+  .connect(`mongodb+srv://${DB_ID}:${DB_PASSWORD + DB_URI}`)
   .then(() => console.log("MongoDB Connected!"))
   .catch((err) => console.log(err));
 
@@ -28,9 +26,8 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
+// 회원가입
 app.post("/register", async (req, res) => {
-  // sign up 시 받아 온 정보를
-  // DB에 추가
   const user = new User(req.body);
 
   await user
