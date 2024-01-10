@@ -9,7 +9,10 @@ inflearn의 `따라하며 배우는 노드, 리액트 시리즈 - 기본 강의`
 1. [패키지 초기 생성](#%EF%B8%8F-패키지-초기-생성)
 2. [MongoDB 연결하기](#%EF%B8%8F-mongodb-연결하기)
 3. [Mongoose로 Schema 만들기](#%EF%B8%8F-mongoose로-schema-만들기)
-4. [POST 메소드를 활용하여 회원가입 API 만들기](#%EF%B8%8F-post-메소드를-활용하여-회원가입-api-만들기)
+4. [POST 메서드를 활용하여 회원가입 API 만들기](#%EF%B8%8F-post-메서드를-활용하여-회원가입-api-만들기)
+5. [Nodemon 설치하기](#%EF%B8%8F-nodemon-설치하기)
+6. [비밀번호 암호화하기](#%EF%B8%8F-비밀번호-암호화하기)
+7. [로그인 로직 작성하기](#%EF%B8%8F-로그인-로직-작성하기)
 
 ## ⚙️ 패키지 초기 생성
 
@@ -196,7 +199,7 @@ const User = mongoose.model("User", userSchema);
 module.exports = { User };
 ```
 
-## ⚙️ POST 메소드를 활용하여 회원가입 API 만들기
+## ⚙️ POST 메서드를 활용하여 회원가입 API 만들기
 
 ### 1. body parser를 설치한다.
 
@@ -325,6 +328,8 @@ userSchema.pre("save", function (next) {
         next();
       });
     });
+  } else {
+    next();
   }
 });
 
@@ -346,13 +351,99 @@ if (user.isModified("password")) {
       next();
     })
     .finally((err) => next(err));
+} else {
+  next();
 }
 ```
 
-콜백 지옥이 싫어서 promise 문법으로 바꾸어 보았다.
+콜백함수를 사용하기 싫어서 promise 문법으로 바꾸어 보았다.
 
 ### 4. Postman으로 확인하기
 
 그리고 잘 돼서 기뻐하기
 
 ## ⚙️ 로그인 로직 작성하기
+
+### 1. post요청을 받는 login API 및 sudo code 생성
+
+```js
+// index.js
+app.post("/login", async (req, res) => {
+  // 받은 이메일을 DB에서 찾는다.
+  // 해당 email로 된 유저가 없을 경우
+  // 있을 경우
+  // 비밀번호가 맞을 경우
+  // 맞다면 토큰 생성
+});
+```
+
+### 2. 이메일 대조 로직 작성
+
+API 함수 내부에 mongoose의 findOne 메서드를 활용하여 클라이언트로부터 받아온 email을 비교하는 로직을 작성한다.<br>
+**여기서 잠깐!**
+findOne 메서드에서 콜백함수를 더 이상 지원하지 않는다는 에러문을 받았다.<br>
+그러니 앞으로 강의 내의 모든 코드를 promise 문법으로 고친 뒤 업로드 할 것이다.
+
+```js
+// index.js
+// app.post("/login" ...
+User.findOne({ email: req.body.email })
+  .then((user) => {
+    // 해당 email로 된 유저가 있을 경우
+    // 비밀번호 체크
+  })
+  // 없을 경우
+  .catch((err) => {
+    res.json({
+      loginSuccess: false,
+      message: "유저가 없습니다.",
+    });
+  });
+```
+
+### 3. model에 비밀번호 대조 메서드 작성
+
+email의 체크가 완료되었다면, 클라이언트가 입력한 password의 유효성을 체크해야한다.<br>
+하지만 DB에 저장되어있는 password는 소금을 뿌린 해시브라운이기 때문에 bcrypt의 compare 메서드를 활용해야 한다.<br>
+그러기 위해서는 bcrypt가 적용되어있는 models의 User.js에 password의 유효성을 검사하는 메서드를 작성하는 것이 좋다.
+
+```js
+// User.js
+userSchema.methods.passwordCheck = function (plainPassword) {
+  // plainPassword && hashedPasword
+  return bcrypt.compare(plainPassword, this.password);
+};
+```
+
+클라이언트로부터 받은 password와 DB내의 password를 서로 비교해서 t/f로 반환하는 `passwordCheck` 메서드를 만들었다!
+
+### 4. API에 비밀번호 대조 로직 작성
+
+비밀번호를 대조하는 메서드의 작성이 완료되었으니 이를 활용하여 비밀번호가 맞지 않는 경우를 걸러주자.
+
+```js
+// index.js
+// app.post("/login" ...
+// User.findOne({ email: req.body.email }).then((user) => {...
+// 해당 email로 된 유저가 있을 경우
+// 비밀번호 체크
+user
+  .passwordCheck(req.body.password)
+  .then((isMatch) => {
+    if (!isMatch) {
+      return res.json({
+        loginSuccess: false,
+        message: "비밀번호 에러",
+      });
+    }
+    // 유효하면 토큰 생성
+  })
+  .catch((err) => {
+    //...
+  });
+```
+
+**여기서 잠깐!**<br>
+로그인 로직의 에러 메시지를 너무 자세하게 작성하게 되면 보안상의 문제가 발생하게 될 수 있으나, 개발 단계의 편의성을 위해 일단...
+
+### 5. JWT 생성

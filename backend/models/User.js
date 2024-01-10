@@ -56,8 +56,15 @@ userSchema.pre("save", function (next) {
         next();
       })
       .finally((err) => next(err));
+  } else {
+    next();
   }
 });
+
+userSchema.methods.passwordCheck = function (plainPassword) {
+  // plainPassword && hashedPasword
+  return bcrypt.compare(plainPassword, this.password);
+};
 
 const User = mongoose.model("User", userSchema);
 
