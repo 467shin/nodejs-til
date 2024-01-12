@@ -24,13 +24,14 @@ mongoose
   .catch((err) => console.log(err));
 
 const { User } = require("./models/User");
+const { auth } = require("./middleware/auth");
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("돌고도는 지구의를 길잡이 삼아");
 });
 
-// 회원가입
-app.post("/register", async (req, res) => {
+// signUp
+app.post("/api/users/register", async (req, res) => {
   const user = new User(req.body);
 
   await user
@@ -46,7 +47,7 @@ app.post("/register", async (req, res) => {
 });
 
 // login
-app.post("/login", async (req, res) => {
+app.post("/api/users/login", async (req, res) => {
   // 요청된 이메일을 데이터베이스에서 찾는다.
   User.findOne({ email: req.body.email })
     .then((user) => {
@@ -76,6 +77,17 @@ app.post("/login", async (req, res) => {
         message: "유저가 없습니다.",
       });
     });
+});
+
+app.get("/api/users/auth", auth, async (req, res) => {
+  // 여기에 도달했다면 auth 로직을 통과했다는 의미
+  res.status(200).json({
+    _id: req.user._id,
+    isAdmin: req.user.role === 0 ? true : false,
+    isAuth: true,
+    email: req.user.email,
+    name: req.user.name,
+  });
 });
 
 app.listen(port, () => {

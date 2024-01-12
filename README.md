@@ -13,6 +13,8 @@ inflearn의 `따라하며 배우는 노드, 리액트 시리즈 - 기본 강의`
 5. [Nodemon 설치하기](#%EF%B8%8F-nodemon-설치하기)
 6. [비밀번호 암호화하기](#%EF%B8%8F-비밀번호-암호화하기)
 7. [로그인 로직 작성하기](#%EF%B8%8F-로그인-로직-작성하기)
+8. [로그인 성공 처리하기](<#%EF%B8%8F-로그인-성공-처리하기-(json-web-token)>)
+9. [권한 처리 하기](<#%EF%B8%8F-권한-처리-하기-(auth-middleware)>)
 
 ## ⚙️ 패키지 초기 생성
 
@@ -232,7 +234,7 @@ const { User } = require("./models/User");
 mongoose의 최신버전에서는 콜백함수를 더 이상 지원하지 않기 때문에 강의대로 진행하면 서버가 다운되고 에러문에 뒤덮이게 될 것입니다.
 
 ```js
-app.post("/register", async (req, res) => {
+app.post("/api/users/register", async (req, res) => {
   // sign up 시 받아 온 정보를
   // DB에 추가
   const user = new User(req.body);
@@ -368,7 +370,7 @@ if (user.isModified("password")) {
 
 ```js
 // index.js
-app.post("/login", async (req, res) => {
+app.post("/api/users/login", async (req, res) => {
   // 받은 이메일을 DB에서 찾는다.
   // 해당 email로 된 유저가 있을 경우
   // 없을 경우
@@ -386,7 +388,7 @@ findOne 메서드에서 콜백함수를 더 이상 지원하지 않는다는 에
 
 ```js
 // index.js
-// app.post("/login" ...
+// app.post("/api/users/login" ...
 User.findOne({ email: req.body.email })
   .then((user) => {
     // 해당 email로 된 유저가 있을 경우
@@ -423,7 +425,7 @@ userSchema.methods.passwordCheck = function (plainPassword) {
 
 ```js
 // index.js
-// app.post("/login" ...
+// app.post("/api/users/login" ...
 // User.findOne({ email: req.body.email }).then((user) => {...
 // 해당 email로 된 유저가 있을 경우
 // 비밀번호 체크
@@ -446,7 +448,7 @@ user
 **여기서 잠깐!**<br>
 로그인 로직의 에러 메시지를 너무 자세하게 작성하게 되면 보안상의 문제가 발생하게 될 수 있으나, 개발 단계의 편의성을 위해 일단...
 
-## ⚙️ 로그인 성공 처리하기(JSON Web Token)
+## ⚙️ 로그인 성공 처리하기 (JSON Web Token)
 
 ### 1. JWT 인스톨
 
@@ -508,4 +510,103 @@ user
     res.cookie("x_auth", userInfo.token).status(200).json({ loginSuccess: true, userId: userInfo._id });
   })
   .catch((err) => res.status(400).send(err));
+```
+
+## ⚙️ 권한 처리 하기 (Auth Middleware)
+
+로그인을 완료하면 인코딩된 token이 발급된다.<br>
+이 token을 활용하여 권한 처리를 하게 된다.<br>
+권한이 필요한 동작을 하기 위해서는 쿠키 내부의 인코딩된 token과 DB의 token을 상호비교하여 유효성을 체크 해야한다.<br>
+그것을 해주는 것이 바로 미들웨어.
+
+### 1. 미들웨어 생성하기
+
+프로젝트 root directory에 middleware라는 폴더를 만들고, auth.js 파일을 만든다.
+
+```js
+// auth.js
+let auth = (req, res, next) => {
+  // 인증 처리 로직
+  // 쿠키에서 토큰 가져오기
+  // 토큰 디코딩하고 유저 찾기
+  // 유저가 없으면 인증 실패
+  // 유저가 있으면 인증 완료
+};
+
+module.exports = { auth };
+```
+
+### 2. 권한 처리 로직 작성하기
+
+#### 2-1. 토큰과 id값으로 유저 찾는 메서드 작성하기
+
+토큰으로 유저를 찾기 위해서는 DB에 접근해야 하기 때문에 user 모델 내부에 token을 매개변수로 받는 메서드를 작성하는 것이 좋다.<br>
+또한 토큰의 검증은 .verify()메서드를 활용하면 가능하다.<br>
+verify 메서드는 아직도 콜백 함수를 인자로 받으며, 콜백함수를 작성하지 않으면 서버 크래시가 나버리기 때문에 npm의 jsonwebtoken 공식문서를 참고하여 try/catch문으로 작성하였다.
+
+```js
+// User.js
+userSchema.statics.findByToken = async function (token) {
+  let user = this;
+
+  // 토큰 디코딩
+  try {
+    const decoded = await jwt.verify(token, "secret");
+    // token을 디코딩하여 얻은 id와
+    // 클라이언트에서 가져온 token과 DB에 보관된 토큰이 일치하는지 확인하여 반환
+    return user.findOne({ _id: decoded, token: token });
+  } catch (err) {
+    // 토큰에러
+    console.log("err:", err);
+  }
+};
+```
+
+#### 2-2. 작성한 메서드를 활용해서 검증하기
+
+```js
+// auth.js
+const { User } = require("../models/User");
+
+let auth = async (req, res, next) => {
+  // 쿠키에서 토큰 가져오기
+  let token = req.cookies.x_auth;
+
+  // 토큰 디코딩하고 유저 찾기
+  User.findByToken(token)
+    .then((user) => {
+      // 유저가 없으면 인증 실패
+      if (!user) return res.json({ isAuth: false });
+
+      // 유저가 있으면 인증 완료
+      req.token = token;
+      req.user = user;
+      next();
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+```
+
+### 3. 권한 처리 API 작성하기
+
+권한 처리 API를 작성할 때 엔드포인트와 콜백함수 사이에 auth 미들웨어를 매개변수로 넣어주면 미들웨어가 먼저 실행된 다음 콜백함수로 넘어가게 된다.<br>
+
+```js
+// index.js
+const { auth } = require("./middleware/auth");
+
+...
+
+app.get("/api/users/auth", auth, async (req, res) => {
+  // 여기에 도달했다면 auth 로직을 통과했다는 의미
+  res.status(200).json({
+    _id: req.user._id,
+    isAdmin: req.user.role === 0 ? true : false,
+    isAuth: true,
+    email: req.user.email,
+    name: req.user.name,
+  });
+});
 ```
