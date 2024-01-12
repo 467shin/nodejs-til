@@ -446,4 +446,66 @@ user
 **여기서 잠깐!**<br>
 로그인 로직의 에러 메시지를 너무 자세하게 작성하게 되면 보안상의 문제가 발생하게 될 수 있으나, 개발 단계의 편의성을 위해 일단...
 
-### 5. JWT 생성
+## ⚙️ 로그인 성공 처리하기(JSON Web Token)
+
+### 1. JWT 인스톨
+
+로그인을 처리하는 방법 중 가장 보편적으로 사용되는 방법이 바로 JSON Web Token(JWT)이다.<br>
+JWT를 생성하기 위해서는 우선 JSONWEBTOKEN이라는 라이브러리를 설치해야 한다.
+
+```
+$ npm i jsonwebtoken --save
+```
+
+### 2. model에 토큰 발급 메서드 작성
+
+라이브러리가 설치가 완료되면 user 정보에 접근하고, user 테이블에 token을 저장해야 하기 때문에 models의 User.js에 토큰을 발급하고 저장하는 메서드를 작성해야한다.
+
+```js
+//User.js
+const jwt = require("jsonwebtoken");
+
+...
+
+userSchema.methods.generateToken = function () {
+  let user = this;
+
+  // token 생성
+  const token = jwt.sign(user._id.toJSON(), "secret");
+
+  user.token = token;
+  return user.save();
+};
+```
+
+**여기서 잠깐!**<br>
+mongoose의 .save() 메서드가 콜백 함수를 지원하지 않도록 바뀌면서 변경된 user 테이블 그 자체를 반환하도록 바뀐 것으로 추정되기에 바로 save()를 반환해 주었다.
+
+### 3. 발급된 토큰을 cookie에 저장
+
+Express에서 cookie에 접근하기 위해서는 cookie-parser라는 라이브러리를 설치해야 한다.
+
+```
+$ npm i cookie-parser --save
+```
+
+설치가 완료 되었다면, index.js에 cookie-parser를 정의해주고, 토큰을 쿠키에 저장하자.
+
+```js
+// index.js
+const cookieParser = require("cookie-parser");
+app.use(cookieParser());
+
+...
+
+// login logic 내부
+
+// 유효하면 토큰 생성
+user
+  .generateToken()
+  .then((userInfo) => {
+    // 쿠키에 토큰 저장
+    res.cookie("x_auth", userInfo.token).status(200).json({ loginSuccess: true, userId: userInfo._id });
+  })
+  .catch((err) => res.status(400).send(err));
+```

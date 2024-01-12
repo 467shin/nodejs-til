@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 // 소금
 const saltRounds = 10;
+const jwt = require("jsonwebtoken");
 
 const userSchema = mongoose.Schema({
   name: {
@@ -34,19 +35,6 @@ const userSchema = mongoose.Schema({
 userSchema.pre("save", function (next) {
   let user = this;
 
-  // if (user.isModified("password")) {
-  //   bcrypt.genSalt(saltRounds, (err, salt) => {
-  //     console.log(salt);
-  //     if (err) return next(err);
-  //     bcrypt.hash(user.password, salt, (err, hash) => {
-  //       console.log(hash);
-  //       if (err) return next(err);
-  //       user.password = hash;
-  //       next();
-  //     });
-  //   });
-  // }
-
   if (user.isModified("password")) {
     bcrypt
       .genSalt(saltRounds)
@@ -64,6 +52,18 @@ userSchema.pre("save", function (next) {
 userSchema.methods.passwordCheck = function (plainPassword) {
   // plainPassword && hashedPasword
   return bcrypt.compare(plainPassword, this.password);
+};
+
+userSchema.methods.generateToken = function () {
+  let user = this;
+
+  // token 생성
+  const token = jwt.sign(user._id.toJSON(), "secret");
+
+  user.token = token;
+  return user.save();
+  // .then((userInfo) => userInfo)
+  // .catch((err) => err);
 };
 
 const User = mongoose.model("User", userSchema);

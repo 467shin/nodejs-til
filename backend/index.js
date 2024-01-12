@@ -8,6 +8,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // json data
 app.use(bodyParser.json());
 
+const cookieParser = require("cookie-parser");
+app.use(cookieParser());
+
 // 환경 변수 접근을 허용해주는 라이브러리
 const dotenv = require("dotenv");
 dotenv.config();
@@ -57,6 +60,13 @@ app.post("/login", async (req, res) => {
           });
         }
         // 유효하면 토큰 생성
+        user
+          .generateToken()
+          .then((userInfo) => {
+            // 쿠키에 토큰 저장
+            res.cookie("x_auth", userInfo.token).status(200).json({ loginSuccess: true, userId: userInfo._id });
+          })
+          .catch((err) => res.status(400).send(err));
       });
     })
     // 유저 없음
