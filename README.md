@@ -13,8 +13,8 @@ inflearn의 `따라하며 배우는 노드, 리액트 시리즈 - 기본 강의`
 5. [Nodemon 설치하기](#%EF%B8%8F-nodemon-설치하기)
 6. [비밀번호 암호화하기](#%EF%B8%8F-비밀번호-암호화하기)
 7. [로그인 로직 작성하기](#%EF%B8%8F-로그인-로직-작성하기)
-8. [로그인 성공 처리하기](#%EF%B8%8F-로그인-성공-처리하기-json-web-token)
-9. [권한 처리 하기](#%EF%B8%8F-권한-처리-하기-auth-middleware)
+8. [로그인 성공 처리하기(JWT)](#%EF%B8%8F-로그인-성공-처리하기-json-web-token)
+9. [권한 처리 하기(Auth Middleware)](#%EF%B8%8F-권한-처리-하기-auth-middleware)
 
 ## ⚙️ 패키지 초기 생성
 
