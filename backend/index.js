@@ -79,6 +79,7 @@ app.post("/api/users/login", async (req, res) => {
     });
 });
 
+// user 정보 반환
 app.get("/api/users/auth", auth, async (req, res) => {
   // 여기에 도달했다면 auth 로직을 통과했다는 의미
   res.status(200).json({
@@ -88,6 +89,13 @@ app.get("/api/users/auth", auth, async (req, res) => {
     email: req.user.email,
     name: req.user.name,
   });
+});
+
+// logout
+app.get("/api/users/logout", auth, async (req, res) => {
+  User.findOneAndUpdate({ _id: req.user._id }, { token: "" })
+    .then(() => res.status(200).send({ success: true }))
+    .catch((err) => res.json({ success: false, err }));
 });
 
 app.listen(port, () => {

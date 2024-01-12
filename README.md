@@ -610,3 +610,17 @@ app.get("/api/users/auth", auth, async (req, res) => {
   });
 });
 ```
+
+## ⚙️ 로그아웃 처리하기
+
+로그아웃은 유저 table의 token을 지워주기만 하면 된다.
+
+```js
+// index.js
+// logout
+app.get("/api/users/logout", auth, async (req, res) => {
+  User.findOneAndUpdate({ _id: req.user._id }, { token: "" })
+    .then(() => res.status(200).send({ success: true }))
+    .catch((err) => res.json({ success: false, err }));
+});
+```
